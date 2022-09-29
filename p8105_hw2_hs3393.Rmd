@@ -1,0 +1,127 @@
+---
+title: "p8105_hw2_hs3393"
+author: "Haochen Sun"
+date: "2022-09-28"
+output: github_document
+---
+## Improt packages
+```{r setup, message= F, warning=F}
+library(readr)
+library(tidyverse)
+library(readxl)
+```
+
+# Problem 1
+```{r prob1}
+data <- read_csv("NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>% 
+  janitor::clean_names()
+
+clean_data <-   select(data, line, station_name, station_latitude,
+         station_longitude, route1:route11, entry, 
+         vending, entrance_type, ada)  %>% 
+  mutate(entry = recode(entry, "YES" = TRUE, "NO" = FALSE))
+
+head(data, n = 5)
+```
+
+This dataset describes the subway lines in New York, and the stations along each line. The data set also includes the latitude and longitude of each station. Route 1-11 means that which route of subway you can take in this station. Whether the entrance is an entry, whther there is a ticket vending machine, and whether it is ADA accessible. Also, the dataset specified the entrance type of each station (stair, elevator, door, or other type, 7 types in total). The other information include the division, whether the entry have staffs and their staff hour, whether there are free crossover, the streets surrounding, the entrance is at which corner, the entrance location, logitude and latitude.
+
+To clean the data, I selected 19 variables from the original dataset, change the names to be well formatted, and I converted the entry varaible from yes/no to True/False. The data is not tidy, because the route information can be integrated.
+
+## Numerical properties
+
+```{r prob1 num}
+station <- nrow(distinct(clean_data, station_name, line))
+print(station)
+
+ada_num <- nrow(select(clean_data, station_name, line, ada)%>% 
+                   unique() %>% 
+                   filter(ada == T) )
+print(ada_num)
+
+
+allow_ent <- filter(clean_data, vending == "NO" ) %>% pull(entry)
+proportion <- round( sum(allow_ent)/length(allow_ent), digits = 3 )
+print(proportion)
+
+```
+
+Therefore, there are 465 distinct stations. 183 stations are ADA compliant. 37.70% station entrances/exits without vending allow entrance. 
+
+## Reformat the data
+```{r pr1 reformat}
+# change the data type of some route, otherwise they cannot be merged
+col_name <- c("route8", "route9", "route10", "route11")
+clean_data[col_name] <- sapply(clean_data[col_name], as.character)
+
+A_train <- pivot_longer(clean_data, cols = route1:route11, names_to = "route_number", names_prefix = "route", values_to = "route_name", values_drop_na = T) %>% distinct(station_name, line, .keep_all = T ) %>% 
+  filter(route_name == "A")
+
+print(nrow(A_train))
+
+print(nrow
+      (filter(A_train, ada == T))
+      )
+```
+
+Therefore, there are 60 stations that serves A train, and 17 of them are ADA compliant.
+
+# Problem 2 
+```{r prob2}
+# The mutate function will indicate which sheet is from
+
+trash_data <- read_excel("Trash-Wheel-Collection-Totals-7-2020-2.xlsx", sheet ="Mr. Trash Wheel", range = "A2:N534") %>%
+  janitor::clean_names() %>% 
+  drop_na(dumpster) %>% 
+  mutate(sports_balls, sports_balls = as.integer(round(sports_balls, digits = 0))) %>% mutate(group = 1 )
+
+prof_data <- read_excel("Trash-Wheel-Collection-Totals-7-2020-2.xlsx", sheet ="Professor Trash Wheel", range = "A2:N117") %>%
+  janitor::clean_names() %>% 
+  drop_na(dumpster) %>% 
+  mutate(sports_balls, sports_balls = as.integer(round(sports_balls, digits = 0))) %>% mutate(group = 2)
+
+merge_data <- bind_rows(trash_data, prof_data)
+```
+
+There are `r nrow(merge_data)` observations in the whole dataset, recording the dumpter number, date of collection, weight (whose mean is `r mean(pull(merge_data, weight_tons))` and SD is `r sd(pull(merge_data, weight_tons))`. The volume of litter (whose mean is `r mean(pull(merge_data, volume_cubic_yards))` cubic yards and SD is `r sd(pull(merge_data, volume_cubic_yards))` cubic yards). The amount of different types of litter, including plastic bottle, polystyrene, cigarette butt, glass bottle, grocery bag, chip bag and sport ball in every single dumpster. Also, the dataset provides the information of how many homes these litters have powered. The data is originated in two wheels, the number of group 1 indicates Mr.Trash Wheel. and 2 indicates Professor Trash Wheel. For example, on 2014/4/16, the No.1 dumpster of Mr.Trash wheel collected 4.31 tons, 18 cubic yards of litters, including 1,450 plastic bottles, 1,820 polystyrene, 126,000 cigarette butts, 72 glass bottles, 584 grocery bags, 1,162 chip bags and 7 sport balls.
+
+## Numeric properties
+```{r prob2 num}
+total <- filter(merge_data, group == "2") %>% pull(weight_tons) %>% sum()
+print(total)
+
+ball <- filter(merge_data , group == "1"& year == "2020") %>% pull(sports_balls) %>% sum()
+print(ball)
+```
+
+Therefore, the total weight of trash collected by Professor Trash Wheel is 135.5 tons. The total number of sports balls collected by Mr.Trash Wheel in 2020 is 856.
+
+# Problem 3
+```{r prob3}
+pol <- read_csv("pols-month.csv") %>%
+  janitor::clean_names()%>%
+  separate(mon, into = c("year", "month", "day"), sep = "-") %>%  mutate(month = recode( month, "01" = "Jan", "02" = "Feb", "03" = "Mar", "04" = "Apr", "05" = "May", "06" = "Jun", "07" = "Jul", "08" = "Aug", "09" = "Sep", "10" = "Oct", "11" = "Nov", "12" = "Dec")) %>% mutate(president = recode(prez_gop, `0` = "dem", `1` = "gop")) %>% select(c(-prez_gop, -prez_dem, -day))
+
+snp <- read_csv("snp.csv") %>% 
+  separate(date, into = c("month", "day", "year"), sep = "/") %>% 
+  mutate(month = recode( month, "1" = "Jan", "2" = "Feb", "3" = "Mar", "4" = "Apr", "5" = "May", "6" = "Jun", "7" = "Jul", "8" = "Aug", "9" = "Sep", "10" = "Oct", "11" = "Nov", "12" = "Dec")) %>%
+  select(-day) %>%
+  mutate(year = as.numeric(year)) %>% 
+  mutate(year = if_else(year < 35, true = year + 2000, false = year + 1900)) %>% 
+  mutate(year = as.character(year)) %>%
+  arrange(year, month) %>% 
+  relocate(year, month)
+  
+unemploy <- read_csv("unemployment.csv") %>%
+  pivot_longer(Jan:Dec, names_to = "month", values_to = "number_umemploy") %>%
+  janitor::clean_names() %>% 
+  mutate(year = as.character(year))
+  
+merge_data <- left_join(pol, snp) %>% 
+  left_join(unemploy) 
+  
+```
+
+The dataset shows at each year, each month, the party of the president belongs to. As well as the governor number, the senator number, representative number of the two parties. The dataset also includes the closing values of the S&P stock index on the associate date, and the percentage of unemployed on the associate date.
+
+The dimension of the dataset is `r nrow(merge_data)` * `r ncol(merge_data)`. The range of year is  `r min(as.numeric(pull (merge_data, year)))` to `r max(as.numeric(pull (merge_data, year)))`. The names of variable is `r colnames(merge_data)`. 
