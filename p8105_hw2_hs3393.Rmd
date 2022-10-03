@@ -110,9 +110,9 @@ Therefore, the total weight of trash collected by Professor Trash Wheel is 135.5
 pol <- read_csv("data/pols-month.csv") %>%
   janitor::clean_names()%>%
   separate(mon, into = c("year", "month", "day"), sep = "-") %>% 
-  mutate(month = recode( month, "01" = "Jan", "02" = "Feb", "03" = "Mar", "04" = "Apr", "05" = "May", "
-    06" = "Jun", "07" = "Jul", "08" = "Aug", "09" = "Sep", "10" = "Oct", "11" = "Nov", "12" = "Dec")) %>% 
-  mutate(president = recode(prez_gop, `0` = "dem", `1` = "gop")) %>% 
+  mutate(month = recode( month, "01" = "Jan", "02" = "Feb", "03" = "Mar", "04" = "Apr", "05" = "May", 
+    "06" = "Jun", "07" = "Jul", "08" = "Aug", "09" = "Sep", "10" = "Oct", "11" = "Nov", "12" = "Dec")) %>% 
+  mutate(president = recode(prez_dem, `0` = "gop", `1` = "dem")) %>% 
   select(c(-prez_gop, -prez_dem, -day))
 
 snp <- read_csv("data/snp.csv") %>% 
