@@ -4,7 +4,7 @@ author: "Haochen Sun"
 date: "2022-09-28"
 output: github_document
 ---
-## Improt packages
+### Import packages
 ```{r setup, message= F, warning=F}
 library(readr)
 library(tidyverse)
@@ -28,7 +28,7 @@ This dataset describes the subway lines in New York, and the stations along each
 
 To clean the data, I selected 19 variables from the original dataset, change the names to be well formatted, and I converted the entry varaible from yes/no to True/False. The data is not tidy, because the route information can be integrated.
 
-## Numerical properties
+### Numerical properties
 
 ```{r prob1 num}
 station <- nrow(distinct(clean_data, station_name, line))
